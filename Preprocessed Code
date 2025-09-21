@@ -1,0 +1,49 @@
+import pandas as pd
+import re
+from bs4 import BeautifulSoup
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+from tabulate import tabulate  # Pretty tables
+
+# Download necessary nltk data
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+# Load dataset
+csv_path = "/content/fake_job_postings.csv"  # Change path if needed
+df = pd.read_csv(csv_path)
+
+print("Columns:", df.columns.tolist())
+print("Original Shape:", df.shape)
+
+# Drop all rows with any null values
+df = df.dropna().reset_index(drop=True)
+print("After dropping rows with any null values:", df.shape)
+
+# Stopwords + Lemmatizer
+STOPWORDS = set(stopwords.words('english'))
+lemmatizer = WordNetLemmatizer()
+
+def clean_text(text):
+    """Clean HTML, lowercase, remove non-alpha, tokenize, remove stopwords, and lemmatize."""
+    text = BeautifulSoup(text, "html.parser").get_text()   # Remove HTML
+    text = text.lower()                                    # Lowercase
+    text = re.sub(r'[^a-z\s]', '', text)                  # Remove punctuation & numbers
+    tokens = word_tokenize(text)                           # Tokenize
+    tokens = [lemmatizer.lemmatize(w) for w in tokens if w not in STOPWORDS and len(w) > 2]
+    return " ".join(tokens)
+
+# Apply text cleaning to the entire dataset
+df['final_text'] = df['description'].apply(clean_text)
+
+# Save preprocessed dataset
+output_path = "/content/preprocessed_fake_job_postings.csv"
+df.to_csv(output_path, index=False)
+print(f"\nPreprocessed dataset saved to: {output_path}")
+
+# Display first 20 rows in a pretty table (optional)
+print("\n Sample of Preprocessed Dataset (First 20 Rows, All Columns):\n")
+print(tabulate(df.head(20), headers='keys', tablefmt='fancy_grid', showindex=True))
