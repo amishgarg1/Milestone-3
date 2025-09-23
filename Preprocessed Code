@@ -9,6 +9,7 @@ from tabulate import tabulate  # Pretty tables
 
 # Download necessary nltk data
 nltk.download('punkt')
+nltk.download('punkt_tab')
 nltk.download('stopwords')
 nltk.download('wordnet')
 
